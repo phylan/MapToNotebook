@@ -33,7 +33,7 @@ class Case(object):
 			if includeExtras:
 				convertedRow['Notes'] += "\r\n\r\n===Casemap Data===\r\n"
 				for extra in includeExtras:
-					convertedRow['Notes'] += "{0}: {1}".format(extra, row.get(extra, ''))
+					convertedRow['Notes'] += "{0}: {1}\r\n".format(extra, row.get(extra, ''))
 			
 			convName = fixName(row.get('Short Name', ''), row.get('Full Name', ''))
 			
