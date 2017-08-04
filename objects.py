@@ -3,7 +3,7 @@ import os, mappings
 
 class Case(object):
 	
-	def __init__(baseFolder):
+	def __init__(self, baseFolder):
 	
 		self.baseFolder = baseFolder
 		self.expFolder = baseFolder + '\\cm_export\\'
@@ -14,9 +14,9 @@ class Case(object):
 		self.facts = (self.expFolder + 'facts.csv', self.impFolder + 'facts.csv')
 		self.organizations = (self.expFolder + 'orgs.csv', self.impFolder + 'orgs.csv')
 		
-	def convertPeople():
+	def convertPeople(self):
 	
-		people = Table(self.people[0], self.people[1])
+		people = Table(self.people[0], self.people[1], mappings.PEOPLE_EXPORT_FIELDS)
 		includeExtras = []
 		converted = []
 		
@@ -47,7 +47,7 @@ class Case(object):
 		
 class Table(object):
 	
-	def __init__(tableFile, exportFile):
+	def __init__(self, tableFile, exportFile, fieldNames):
 		
 		with open(tableFile) as rawIn:
 			reader = DictReader(rawIn)

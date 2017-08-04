@@ -17,7 +17,7 @@ PEOPLE_MAPPINGS = [
 			('','Home Country/Region'),
 			('','Home Fax'),
 			('','Home Phone'),
-			('','Home Phone 2')
+			('','Home Phone 2'),
 			('Phone Numbers','Mobile Phone'),
 			('Address: E-mail','E-mail Address'),
 			('','E-mail 2 Address'),
