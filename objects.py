@@ -56,7 +56,7 @@ class Table(object):
 			self.contents = [dict(a) for a in list(reader)]
 		
 		self.rawOut = exportFile
-		self.writer = DictWriter(open(self.rawOut, 'w'), fieldnames = fieldNames)
+		self.writer = DictWriter(open(self.rawOut, 'w'), lineterminator='\n', fieldnames = fieldNames)
 
 def fixName(shortName, fullName):
 	
