@@ -1,4 +1,4 @@
-PEOPLE = [
+PEOPLE_MAPPINGS = [
 			('','Title'),
 			('Works For','Company'),
 			('','Department'),
@@ -52,7 +52,11 @@ PEOPLE = [
 			('# Undisputed Facts', 'Discard')
 ]
 
-#Extraneous Casemap fields that will get mapped to Notes with notation
+#Extraneous Casemap fields that will get mapped to Notes with notation:
 
 PEOPLE_EXTRAS = ['At Trial +', 'Calling Party +', 'Counsel', 'Deposition Date', 'Deposition Status +', 'Description', 'Gender', 'Type +', '# Facts', '# Documents', '# Issues', 'Linked Issues']
+
+#Final field order of CN import file (matches Outlook fields per CN documentation):
+
+PEOPLE_EXPORT_FIELDS = ["Title","First Name","Last Name","Company","Department","Job Title","Business Street","Business City","Business State","Business Postal Code","Business Country/Region","Business Fax","Business Phone","Home Street","Home City","Home State","Home Postal Code","Home Country/Region","Home Fax","Home Phone","Home Phone 2","Mobile Phone","E-mail Address","E-mail 2 Address","Notes"]
 	
