@@ -59,4 +59,7 @@ PEOPLE_EXTRAS = ['At Trial +', 'Calling Party +', 'Counsel', 'Deposition Date', 
 #Final field order of CN import file (matches Outlook fields per CN documentation):
 
 PEOPLE_EXPORT_FIELDS = ["Title","First Name","Last Name","Company","Department","Job Title","Business Street","Business City","Business State","Business Postal Code","Business Country/Region","Business Fax","Business Phone","Home Street","Home City","Home State","Home Postal Code","Home Country/Region","Home Fax","Home Phone","Home Phone 2","Mobile Phone","E-mail Address","E-mail 2 Address","Notes"]
-	
+
+#Final field order of fact import:
+
+FACT_EXPORT_FIELDS = ["Title", "Description", "Characters", "Start Date", "End Date", "Issues", "Full-Text Sources", "Annotation Sources", "Undisputed", "Author"]
