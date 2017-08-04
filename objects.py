@@ -39,6 +39,8 @@ class Case(object):
 			
 			convertedRow['Last Name'] = convName[0]
 			convertedRow['First Name'] = convName[1]
+			
+			del convertedRow['Discard']
 		
 			converted.append(convertedRow)
 			
@@ -54,7 +56,7 @@ class Table(object):
 			self.contents = [dict(a) for a in list(reader)]
 		
 		self.rawOut = exportFile
-		self.writer = DictWriter(open(self.rawOut, 'w'))
+		self.writer = DictWriter(open(self.rawOut, 'w'), fieldnames = fieldNames)
 
 def fixName(shortName, fullName):
 	
