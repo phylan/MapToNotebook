@@ -60,6 +60,21 @@ PEOPLE_EXTRAS = ['At Trial +', 'Calling Party +', 'Counsel', 'Deposition Date', 
 
 PEOPLE_EXPORT_FIELDS = ["Title","First Name","Last Name","Company","Department","Job Title","Business Street","Business City","Business State","Business Postal Code","Business Country/Region","Business Fax","Business Phone","Home Street","Home City","Home State","Home Postal Code","Home Country/Region","Home Fax","Home Phone","Home Phone 2","Mobile Phone","E-mail Address","E-mail 2 Address","Notes"]
 
+#Suffixes and prefixes to be removed from people Full Names during people import
+NAME_JUNK = ["Dr. ", "Mr. ", " CPA", ", CPA", ", Esq", ", Esq.", " Esq.", " Esq", " M.D.", ", M.D.", "Mrs. ", "Ms. ", "Miss ", "Father ", "Monsignor ", "Msgr. ", ", PsyD", " PsyD"]
+
 #Final field order of fact import:
 
 FACT_EXPORT_FIELDS = ["Title", "Description", "Characters", "Start Date", "End Date", "Issues", "Full-Text Sources", "Annotation Sources", "Undisputed", "Author"]
+
+#Extraneous fields in documents from CM to discard
+
+DOC_DISCARD_FIELDS = ["Creation Author", "Creation Scribe", "Last Update Author", "Last Update Scribe", "Pages", "Attach Count", "Last Update Time Stamp", "Object Type", "Related Files",
+						"Reviewed By +", "Sent Via +", "# Docs Not Privileged","# Docs Not Reviewed","# Docs Privileged","# Docs Reviewed","# Documents","# Emails","# Fact Text","# Facts","# Issues","# Key Facts",
+						"# Objects","# Open Questions","# Prospective Facts","# Questions","# Undisputed Facts", "# Sourced Facts", "Creation Time Stamp"]
+
+DOC_SUFFIXES = [" - (Power PDF)", " - (Acrobat)", " - (Windows Files)"]
+
+DOC_BUILT_INS = ["Bates - Begin", "Bates - End", "Date", "Short Name", "Type +", "Author(s)", "Recipient(s)", "Copied To", "Linked Issues", "Linked File"]
+
+DOC_MULTI_FIELDS = ["Linked Issues", "Author(s)", "Recipient(s)", "CC", "BCC"]
