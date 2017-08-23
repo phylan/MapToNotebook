@@ -14,6 +14,41 @@ class Case(object):
 		self.facts = (self.expFolder + 'facts.csv', self.impFolder + 'facts.csv')
 		self.organizations = (self.expFolder + 'orgs.csv', self.impFolder + 'orgs.csv')
 
+	def convertIssues(self):
+
+		namesWriter = DictWriter(open(self.expFolder + 'issue_names.csv', 'w'), lineterminator='\n', fieldnames = ['Short Name', 'Full Name'])
+		namesWriter.writeheader()
+		
+		with open(self.issues[0]) as rawIn:
+			reader = DictReader(rawIn)
+			contents = [dict(a) for a in list(reader)]
+			
+		defaultColor = "#FFFF00"
+		counter = 1
+		
+		convertedTable = []
+		
+		for row in contents:
+		
+			number = row['Full Name'].split()[0]
+			
+			if '.' not in number:
+				number += '.0'
+			
+			name = ' '.join(row['Full Name'].split()[1:])
+			color = defaultColor
+			order = counter
+			
+			convertedTable.append({'Number' : number, 'Order' : order, 'Color' : color, 'Name' : name})
+			counter += 1
+			
+			namesWriter.writerow({'Short Name' : row['Short Name'], 'Full Name' : name})
+			
+		issuesWriter = DictWriter(open(self.issues[1], 'w'), lineterminator='\n', fieldnames = ['Number', 'Order', 'Color', 'Name'])
+
+		for row in convertedTable:
+			issuesWriter.writerow(row)
+			
 	def convertDocs(self):
 		
 		shortMap = {}
