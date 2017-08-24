@@ -51,11 +51,17 @@ class Case(object):
 			
 	def convertDocs(self):
 		
-		shortMap = {}
+		shortMap, issueMap = {}, {}
+		issueLists = []
+		issuePrefix = "DLI_"
 		
 		with open(self.expFolder + 'people_names.csv','r') as namesIn:
 			reader = DictReader(namesIn)
 			[shortMap.update({a['Short Name']:a['Full Name']}) for a in list(reader)]
+			
+		with open(self.expFolder + 'issue_names.csv','r') as issuesIn:
+			reader = DictReader(issuesIn)
+			[issueMap.update({a['Short Name']:a['Full Name']}) for a in list(reader)]
 		
 		with open(self.documents[0]) as rawIn:
 			reader = DictReader(rawIn)
@@ -64,6 +70,10 @@ class Case(object):
 		for entry in contents:
 			for field in mappings.DOC_DISCARD_FIELDS:
 				entry.pop(field)
+				
+			issueLists.append([a.strip() for a in entry['Linked Issues'].split(',')])
+			
+		issueMax = len(max(issueLists, key=len))
 			
 		allFields = list(contents[0].keys())
 		
@@ -87,8 +97,19 @@ class Case(object):
 				fieldOut.close()
 		
 		finalFields = list(contents[0].keys())
+		finalFields.remove('Linked Issues')
+		
+		for i in range(0, issueMax):
+			finalFields.append("{0}{1}".format(issuePrefix, i))
 		
 		for row in contents:
+			
+			if not row['Linked Issues'] == '':
+				for index, issue in enumerate(row['Linked Issues'].split(',')):
+					row.update({'{0}{1}'.format(issuePrefix, index) : issueMap[issue.strip()]})
+		
+			row.pop('Linked Issues')
+		
 			for key, value in row.items():
 				row[key] = value.replace(',',';')
 		
