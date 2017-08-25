@@ -1,4 +1,5 @@
 from csv import DictReader, DictWriter
+from dateutil.parser import parse
 import os, mappings, re
 
 class Case(object):
@@ -51,9 +52,13 @@ class Case(object):
 			
 	def convertDocs(self):
 		
-		shortMap, issueMap = {}, {}
+		shortMap, issueMap, orgMap = {}, {}, {}
 		issueLists = []
 		issuePrefix = "DLI_"
+		
+		with open(self.expFolder + 'org_names.csv', 'r') as namesIn:
+			reader = DictReader(namesIn)
+			[orgMap.update({a['Short Name']:a['Full Name']}) for a in list(reader)]
 		
 		with open(self.expFolder + 'people_names.csv','r') as namesIn:
 			reader = DictReader(namesIn)
@@ -83,17 +88,33 @@ class Case(object):
 					row.pop(field)
 					
 		for entry in contents:
+		
+			if entry['Date'] in ['TBD','']:
+				entry['Date'] = ''
+			else:
+				entry['Date'] = fixDate(entry['Date'])
+				
 			for suffix in mappings.DOC_SUFFIXES:
 				entry['Linked File'] = entry['Linked File'].replace(suffix, '')
 			
 			for short, full in shortMap.items():
 				for key, value in entry.items():
-					entry[key] = value.replace(short,full)
+					if key == 'Linked File':
+						continue
+					else:
+						entry[key] = value.replace(short,full)
+					
+			for short, full in orgMap.items():
+				for key, value in entry.items():
+					if key == 'Linked File':
+						continue
+					else:
+						entry[key] = value.replace(short,full)
 		
 		for field in list(contents[0].keys()):
 			if field not in mappings.DOC_BUILT_INS:
 				fieldOut = open(self.impFolder + 'doc_custom_props.txt', 'a')
-				fieldOut.write("{0}".format(field))
+				fieldOut.write("{0}\n".format(field))
 				fieldOut.close()
 		
 		finalFields = list(contents[0].keys())
@@ -106,20 +127,29 @@ class Case(object):
 			
 			if not row['Linked Issues'] == '':
 				for index, issue in enumerate(row['Linked Issues'].split(',')):
-					row.update({'{0}{1}'.format(issuePrefix, index) : issueMap[issue.strip()]})
-		
+					try:
+						row.update({'{0}{1}'.format(issuePrefix, index) : issueMap[issue.strip()]})
+					except KeyError: # in case there are dupe issues(replaced above) and org names
+						row.update({'{0}{1}'.format(issuePrefix, index) : issue.strip()})
+						
 			row.pop('Linked Issues')
 		
 			for key, value in row.items():
-				row[key] = value.replace(',',';')
+				if key == 'Linked File':
+					continue
+				else:
+					row[key] = value.replace(',',';')
 		
 		writer = DictWriter(open(self.documents[1], 'w'), lineterminator = '\n', fieldnames = finalFields)
-		
+		docShortWriter = DictWriter(open(self.expFolder + 'doc_shorts.csv', 'w'), lineterminator = '\n', fieldnames = ['Short Name'])
+	
 		writer.writeheader()
+		docShortWriter.writeheader()
 		
 		for row in contents:
 			writer.writerow(row)
-		
+			docShortWriter.writerow({'Short Name' : row['Short Name']})
+			
 	def convertPeople(self):
 	
 		people = Table(self.people[0], self.people[1], mappings.PEOPLE_EXPORT_FIELDS)
@@ -157,6 +187,140 @@ class Case(object):
 			
 		for row in converted:
 			people.writer.writerow(row)
+			
+	def convertOrgs(self):
+	
+		namesWriter = DictWriter(open(self.expFolder + 'org_names.csv','w'), lineterminator='\n', fieldnames = ['Short Name', 'Full Name'])
+		namesWriter.writeheader()
+		
+		with open(self.organizations[0]) as rawIn:
+			reader = DictReader(rawIn)
+			contents = [dict(a) for a in list(reader)]
+			
+		exportFields = mappings.ORG_EXPORT_FIELDS
+		
+		orgsWriter = DictWriter(open(self.organizations[1], 'w'), lineterminator='\n', fieldnames=exportFields, extrasaction='ignore')
+		orgsWriter.writeheader()
+		
+		for row in contents:
+			newRow = {
+						'Title' : '',
+						'First Name' : '',
+						'Last Name' : '',
+						'Company' : row.get('Full Name'),
+						'Department' : 'Organization',
+						'Business Street' : row.get('Address: Business',''),
+						'E-mail Address' : row.get('Address: E-mail',''),
+						'Notes' : row.get('Role In Case')
+					}
+			
+			newRow['Notes'] += '\r\n Key: {0}'.format(row.get('Key',''))
+			newRow['Notes'] += '\r\n Linked Issues: {0}'.format(row.get('Linked Issues',''))
+			
+			orgsWriter.writerow(newRow)
+			namesWriter.writerow({'Short Name' : row.get('Short Name'), 'Full Name' : row.get('Full Name')})
+	
+	def convertFacts(self):
+	
+		finalFields = mappings.FACT_EXPORT_FIELDS
+		
+		shortMap, issueMap, orgMap = {}, {}, {}
+		
+		with open(self.expFolder + 'org_names.csv', 'r') as namesIn:
+			reader = DictReader(namesIn)
+			[orgMap.update({a['Short Name']:a['Full Name']}) for a in list(reader)]
+		
+		with open(self.expFolder + 'people_names.csv','r') as namesIn:
+			reader = DictReader(namesIn)
+			[shortMap.update({a['Short Name']:a['Full Name']}) for a in list(reader)]
+			
+		with open(self.expFolder + 'issue_names.csv','r') as issuesIn:
+			reader = DictReader(issuesIn)
+			[issueMap.update({a['Short Name']:a['Full Name']}) for a in list(reader)]
+			
+		with open(self.facts[0], 'r') as factsIn:
+			reader = DictReader(factsIn)
+			contents = [dict(a) for a in list(reader)]
+		
+		with open(self.expFolder + 'doc_shorts.csv','r') as docShortsIn:
+			reader = DictReader(docShortsIn)
+			docShorts = []
+			[docShorts.append(a['Short Name']) for a in list(reader)]
+		
+		for row in contents:
+			
+			for field in mappings.FACT_DISCARD_FIELDS:
+				row.pop(field,'')
+		
+		allFields = list(contents[0].keys())
+		
+		for field in allFields:
+			if not any(entry[field] for entry in contents):
+				for row in contents:
+					row.pop(field)
+		
+		for field in list(contents[0].keys()):
+			if field not in mappings.FACT_BUILT_INS:
+				fieldOut = open(self.impFolder + 'fact_custom_props.txt', 'a')
+				fieldOut.write("{0}\n".format(field))
+				fieldOut.close()
+		
+		for row in contents:
+			
+			charList = []
+
+			for short, full in orgMap.items():
+				if short in row['Fact Text']:
+					row['Fact Text'] = row['Fact Text'].replace(short, full)
+					charList.append(full)
+					
+			for short, full in shortMap.items():
+				if short in row['Fact Text']:
+					row['Fact Text'] = row['Fact Text'].replace(short, full)
+					charList.append(full)
+								
+			for short, full in issueMap.items():
+				row['Linked Issues'] = row['Linked Issues'].replace(short, full)
+				
+			row['Issues'] = row.pop('Linked Issues').replace(',',';')
+			row['Characters'] = '; '.join(charList)
+			row['Description'] = row.pop('Fact Text')
+			row['Title'] = ' '.join(row['Description'].split()[:8])
+			row['Undisputed'] = 'No'
+			
+			if row['Date & Time'] == 'TBD':
+				row['Start Date'] = ''
+				row['End Date'] = ''
+			
+			else:
+				row['Start Date'] = fixDate(row['Date & Time'])
+				
+			row.pop('Date & Time')
+			
+			row['Author'] = ''
+			row['Annotation Sources'] = ''
+			
+			sourceList = []
+			
+			for doc in docShorts:
+				if doc in row['Source(s)']:
+					sourceList.append(doc)
+					row['Source(s)'] = row['Source(s)'].replace(doc,'')
+			
+			row['Source(s)'] = re.sub(r'\[.*\]', '', row['Source(s)'])
+			
+			row['Full-Text Sources'] = '; '.join(sourceList)
+			row['Full-Text Sources'] += '; {0}'.format(row['Source(s)'].strip())
+			
+			row.pop('Source(s)')
+			
+		finalFields = list(contents[0].keys())
+		
+		factWriter = DictWriter(open(self.facts[1], 'w'), lineterminator='\n', fieldnames=finalFields)
+		factWriter.writeheader()
+		
+		for row in contents:
+			factWriter.writerow(row)
 		
 class Table(object):
 	
@@ -169,6 +333,25 @@ class Table(object):
 		self.rawOut = exportFile
 		self.writer = DictWriter(open(self.rawOut, 'w'), lineterminator='\n', fieldnames = fieldNames)
 
+class CMAnnotation(object):
+
+	def __init__(self, annotationString):
+	
+		for pattern, props in mappings.annotationPatterns.items():
+		
+			if pattern.search(annotationString):
+				
+				self.raw = pattern.search(annotationString).group(0)
+				self.parser = props['func']
+				self.type = props['type']
+				
+		try:
+			for key, value in self.parser(self.raw).items():
+				setattr(self, key, value)
+				
+		except AttributeError:
+			raise ValueError("Invalid annotation string")
+		
 def fixName(shortName, fullName):
 	
 	splitShort = re.findall(r'[A-Z][a-z]*(?:[^A-Z])', shortName)
@@ -197,3 +380,17 @@ def fixName(shortName, fullName):
 		firstName = nameElements[0]
 	
 	return (lastName, firstName)
+	
+def fixDate(dateString):
+	
+	dateString = dateString.replace('??','01')
+	
+	try:
+		dateObj = parse(dateString)
+		
+	except ValueError:
+		return dateString
+		
+	outFormat = "%m/%d/%Y %I:%M%p"
+	
+	return dateObj.strftime(outFormat)
